@@ -36,11 +36,11 @@ class Game:
             if hand.is_aces_pair():
                 hand1 = PlayerHand(hand.get_initial_bet())
                 hand1.set_initial_cards(hand.get_card1(), self._shoe.draw())
-                player.adjust_bankroll(-hand.get_initial_bet())
+                player.adjust_bankroll(-hand1.get_initial_bet())
 
                 hand2 = PlayerHand(hand.get_initial_bet())
                 hand2.set_initial_cards(hand.get_card2(), self._shoe.draw())
-                player.adjust_bankroll(-hand.get_initial_bet())
+                player.adjust_bankroll(-hand2.get_initial_bet())
 
                 player.add_active_hand(hand1)
                 player.add_active_hand(hand2)
