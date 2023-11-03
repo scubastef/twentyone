@@ -37,15 +37,3 @@ class PlayerStrategy:
         return self._pair_splitting_table
     
 
-
-if __name__ == '__main__':
-    sss = PlayerStrategy('Strategies/BasicStrategy')
-    df = sss._hard_totals_table.copy()
-    print(df)
-    df[df=='H'] = Action.HIT
-    df[df=='S'] = Action.STAND
-    df[df=='D'] = Action.SPLIT
-    print(df)
-    # print(sss._soft_totals_init_table)
-    # print(sss._soft_totals_post_table)
-    # print(sss._pair_splitting_table)

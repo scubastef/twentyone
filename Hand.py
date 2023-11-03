@@ -2,37 +2,32 @@
 
 class PlayerHand:
 
-    def __init__(self, card1 : int, card2 : int, initial_bet: float) -> None:
-        self._card1 = card1
-        self._card2 = card2
+    def __init__(self, initial_bet: float) -> None:
+        self._card1 = None
+        self._card2 = None
 
-        self._is_pair = (card1 == card2)
-        self._num_soft_aces = card1 == 11 + card2 == 11
+        self._num_cards = 0
+        self._num_soft_aces = 0
+        self._hand_sum = 0
 
-        self._hand_sum = card1 + card2
-        self._is_blackjack = (card1 + card2) == 21
 
         self._initial_bet = initial_bet
-
-    def get_is_pair(self):
-        return self._is_pair
     
-    def set_is_pair(self, bool : bool):
-        self._is_pair = bool
-    
-    def get_is_soft_ace(self):
+    def soft_ace_exits(self):
         return self._num_soft_aces > 0
 
     def get_card1(self):
         return self._card1
     
     def set_card1(self, card : int):
+        self._num_cards += 1
         self._card1 = card
     
     def get_card2(self):
         return self._card2
     
     def set_card2(self, card : int):
+        self._num_cards += 1
         self._card2 = card
 
     def get_initial_bet(self):
@@ -44,13 +39,13 @@ class PlayerHand:
     def adjust_initial_bet(self, amount : float):
         self._initial_bet += amount
     
-    def get_is_blackjack(self) -> bool:
-        return self._is_blackjack
+    def is_blackjack(self) -> bool:
+        return self._card1 + self._card2 == 21
     
     def update_hand(self, new_card : int):
+        self._num_cards += 1
         self._num_soft_aces += (new_card == 11)
         self._hand_sum += new_card
-        self._is_pair = False
 
         while self._hand_sum > 21 and self._num_soft_aces > 0:
             self._hand_sum -= 10
@@ -59,8 +54,37 @@ class PlayerHand:
     def get_hand_sum(self):
         return self._hand_sum
     
+    def is_initial(self):
+        return self._num_cards == 2
+    
     def is_busted(self):
         return self._hand_sum > 21 and self._num_soft_aces==0
+
+    def set_initial_cards(self, card1 : int, card2 : int):
+        self._card1 = card1
+        self._card2 = card2
+
+    def is_aces_pair(self):
+        return self._card1 + self._card2 == 22
+    
+    def is_pair(self):
+        assert self._card1 is not None or self._card2 is not None, 'cards cant be None'
+        return (self._card1 == self._card2) and self._num_cards == 2
+    
+    def initalize_cards(self, card1 : int, card2 : int):
+        self._card1 = card1
+        self._card2 = card2
+        self._num_cards = 2
+        self._hand_sum = card1 + card2
+        self._num_soft_aces = (card1==11 + card2==11)
+
+    def manually_convert_one_hard_to_soft(self):
+        '''FOR EXTREMLY RARE CASES'''
+        while self._hand_sum > 21 and self._num_soft_aces > 0:
+            self._hand_sum -= 10
+            self._num_soft_aces -= 1
+
+
 
 
 

@@ -2,24 +2,21 @@ from enum import Enum
 from Shoe import Shoe
 from Hand import DealerHand, PlayerHand
 from Strategy import PlayerStrategy
-from Enums import DealerStrategy
-
-class Action(Enum):
-    STAND = 0
-    HIT = 1
-    SPLIT = 2
-
+from Enums import DealerStrategy, Action
 
 class Player:
 
 
     def __init__(self, strategy : PlayerStrategy, bankroll : int) -> None:
         self._strategy = strategy
-        self._hand = None
+        self._initial_hand = None
         self._active_hands = []
         self._bankroll = bankroll
-        self._activitiy_status = True
+        self._activity_status = True
         self._num_splits = 0
+
+    def get_activity_status(self):
+        return self._activity_status
 
     def get_active_hands(self) -> list[PlayerHand]:
         return self._active_hands
@@ -27,23 +24,30 @@ class Player:
     def add_active_hand(self, hand : PlayerHand):
         self._active_hands.append(hand)
 
-    def get_bet(self):
-        return 5 #TODO
-
     def get_action(self, player_hand : PlayerHand, dealer_hand : DealerHand):
-        if player_hand.is_busted(): return Action.STAND
+        if player_hand.is_busted(): 
+            return Action.STAND
+        
+        player_sum, dealer_card = player_hand.get_hand_sum(), dealer_hand.get_upcard()
+        print(player_sum, dealer_card)
 
-        splitable = self._num_splits < 4 and player_hand.get_is_pair() #TODO: get rid of magic number
-        init = (player_hand.get_card1() + player_hand.get_card2()) == player_hand.get_hand_sum()
+        can_split = self._num_splits < 4 and player_hand.is_pair() #TODO: get rid of magic number
+        initial = player_hand.is_initial()
 
-        if splitable: 
-            action = self._strategy.get_pair_splitting_table().loc[player_hand.get_hand_sum(), dealer_hand.get_upcard()]
-        elif player_hand.get_is_soft_ace() and init:
-            action = self._strategy.get_soft_totals_init_table().loc[player_hand.get_hand_sum(), dealer_hand.get_upcard()]
-        elif player_hand.get_is_soft_ace() and ~init:
-            action = self._strategy.get_soft_totals_post_table().loc[player_hand.get_hand_sum(), dealer_hand.get_upcard()]
+
+        ###### an extremly rare case ######
+        if player_hand.is_aces_pair() and ~can_split: 
+            player_hand.manually_convert_one_hard_to_soft()
+        ###### an extremly rare case ######
+
+        if can_split: 
+            action = self._strategy.get_pair_splitting_table().loc[player_sum, dealer_card]
+        elif player_hand.soft_ace_exits() and initial:
+            action = self._strategy.get_soft_totals_init_table().loc[player_sum, dealer_card]
+        elif player_hand.soft_ace_exits() and not initial:
+            action = self._strategy.get_soft_totals_post_table().loc[player_sum, dealer_card]
         else:
-            action = self._strategy.get_hard_totals_table().loc[player_hand.get_hand_sum(), dealer_hand.get_upcard()]
+            action = self._strategy.get_hard_totals_table().loc[player_sum, dealer_card]
         
         return action
 
@@ -56,7 +60,7 @@ class Player:
         self._hand.set_card2(card2)
     
     def get_hand(self):
-        return self._hand
+        return self._initial_hand
 
     def adjust_bankroll(self, amount : float):
         self._bankroll += amount
@@ -77,10 +81,19 @@ class Player:
         return self._bankroll
     
     def reset_hands(self):
-        self._hand = None
+        self._initial_hand = None
         self._active_hands = []
-        self._activitiy_status = True
+        self._activity_status = True
         self._num_splits = 0
+
+    def place_bet(self):
+        assert self._initial_hand is None, 'Can only place a bet before the dealer deals the cards'
+        self._initial_hand = PlayerHand(5) # TODO: use a startegy
+        self._bankroll -= 5 # TODO make sure to update
+
+    def initialize_initial_hand_cards(self, card1 : int, card2 : int):
+        assert self._hand is not None, 'Can only assign cards after a bet has been made'
+        self._initial_hand.set_initial_cards(card1, card2)
         
         
 
